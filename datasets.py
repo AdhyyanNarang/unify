@@ -294,7 +294,7 @@ def load_attack(dataset_name, file_name):
     elif ext == '.npz':
         return load_attack_npz(dataset_name, file_name)    
     else:
-        raise ValueError, 'File extension must be .mat or .npz.'
+        raise ValueError('File extension must be .mat or .npz.')
 
 
 def load_attack_mat(dataset_name, file_name, take_path=False):

@@ -76,7 +76,7 @@ def compute_dists_under_Q(
     elif norm == 2:
         metric = 'euclidean'
     else:
-        raise ValueError, 'norm must be 1 or 2'
+        raise ValueError('norm must be 1 or 2')
 
     Q_dists = np.zeros(X.shape[0])
     if subtract_from_l2:
