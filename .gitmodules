@@ -1,3 +1,9 @@
 [submodule "influence"]
 	path = influence
 	url = https://github.com/kohpangwei/influence-release
+[submodule "prev_code/tensorflow-adversarial"]
+	path = prev_code/tensorflow-adversarial
+	url = https://github.com/gongzhitaao/tensorflow-adversarial.git
+[submodule "influence-release"]
+	path = influence-release
+	url = https://github.com/kohpangwei/influence-release.git

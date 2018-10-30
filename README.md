@@ -1,4 +1,4 @@
-Experiments-Copy2.ipynb: Latest file for adversarial training
-
-
-Experiments-Poison.ipynb: Latest file for poisoning with influence functions
+- influence_release: submodule for data poisoning code from kohpangwei/influence-release
+- scripts: contains the experiments
+	- Experiments-Copy2.ipynb: Latest file for adversarial training
+	- Experiments-Poison.ipynb: Latest file for poisoning with influence functions
