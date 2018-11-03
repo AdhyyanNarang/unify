@@ -29,8 +29,11 @@ import matplotlib.gridspec as gridspec
 
 import tensorflow as tf
 
-from attacks import fgm
+import sys
 
+sys.path.insert(0, './tensorflow-adversarial')
+
+from attacks import fgm
 
 img_size = 28
 img_chan = 1

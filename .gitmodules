@@ -7,3 +7,6 @@
 [submodule "influence-release"]
 	path = influence-release
 	url = https://github.com/kohpangwei/influence-release.git
+[submodule "inceptionv3-transferLearn-poison"]
+	path = inceptionv3-transferLearn-poison
+	url = https://github.com/ashafahi/inceptionv3-transferLearn-poison.git
