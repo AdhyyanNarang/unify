@@ -1,3 +1,7 @@
 .ipynb*
 *pyc
 *.log
+poison_frogs/dataset_dog-fish_train-900_test-300.npz
+poison_frogs/Data/
+poison_frogs/inceptionModel
+poison_frogs/poisonImages
