@@ -3,13 +3,15 @@ import tensorflow as tf
 from tensorflow import keras
 from keras.layers import Conv2D, MaxPooling2D, Dropout, Flatten, Dense, Dropout
 from keras import regularizers
+from keras import backend
 
 # Helper libraries
 import numpy as np
 import matplotlib.pyplot as plt
 from cleverhans.utils_tf import model_eval
 from cleverhans.attacks import FastGradientMethod
-from cleverhans.utils import AccuracyReport
+from cleverhans.utils_keras import KerasModelWrapper
+
 
 #Load the data
 mnist = keras.datasets.mnist
@@ -59,7 +61,8 @@ def create_model_two():
 
 
 def adv_evaluate(model_input, epsilon_input):
-    fgsm = FastGradientMethod(model_input)
+    wrap = KerasModelWrapper(model_input)
+    fgsm = FastGradientMethod(wrap)
     adv_x = fgsm.generate_np(test_images, eps = epsilon_input, clip_min = -2, clip_max = 2)
     preds_adv = model_input.predict(adv_x)
     eval_par = {'batch_size': 60000}
@@ -90,12 +93,14 @@ model.compile(optimizer = tf.train.AdamOptimizer(),
              loss = 'sparse_categorical_crossentropy',
              metrics =['accuracy'])
 
+print('Compiled the model!')
+print('Creating modified train set!')
 #Phase 2.1: Create modified train set
 with tf.Session() as sess:
     #Train the model
     sess.run(tf.global_variables_initializer())
     model.fit(train_images, train_labels, epochs = 2)
-
+    """
     #Choose indices for normal and adversarial examples
     threshold = int(np.round(0.4*n))
     example_indices = range(threshold,n)
@@ -103,19 +108,23 @@ with tf.Session() as sess:
 
     #Create the adversarial examples
     chosen_adv_images = train_images[example_indices]
-    fgsm = FastGradientMethod(model, sess = sess)
-    adv_x = fgsm.generate_np(chosen_adv_images, eps = 0.5, clip_min = -1, clip_max = 1)
+    """
+    wrap = KerasModelWrapper(model)
+    fgsm = FastGradientMethod(wrap, sess = sess)
+    adv_x = fgsm.generate_np(train_images, eps = 0.3, clip_min = -1, clip_max = 1)
 
     #Create our new train set
-    new_train = np.vstack((train_images[train_indices], adv_x))
+    #new_train = np.vstack((train_images[train_indices], adv_x))
+    new_train = adv_x
 
 #Phase 2.2: Test both regaular and adversarially trained models
 with tf.Session() as sess:
     #Train the model
-    print('initialized variables')
     sess.run(tf.global_variables_initializer())
+    print('Testing the benign model')
     train_and_test(model, train_images, train_labels)
     sess.run(tf.global_variables_initializer())
     layer = model.get_layer(index = 4)
     weights = layer.get_weights()
+    print('Training the adversarially trained model')
     train_and_test(model, new_train, train_labels)
