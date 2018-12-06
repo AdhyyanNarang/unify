@@ -1,4 +1,5 @@
 # TensorFlow and tf.keras
+import os
 import tensorflow as tf
 from tensorflow import keras
 from keras.layers import Conv2D, MaxPooling2D, Dropout, Flatten, Dense, Dropout
@@ -12,19 +13,25 @@ sys.path.insert(0, '../cleverhans')
 import numpy as np
 import matplotlib.pyplot as plt
 from cleverhans.attacks import FastGradientMethod
-from cleverhans.utils_keras import KerasModelWrapper
+from cleverhans.utils_keras import KerasModelWrapper, cnn_model
 from cleverhans.utils_tf import model_eval
 from cleverhans.train import train
 from cleverhans.loss import CrossEntropy
 
 from adv_util import create_model_one, adv_evaluate, train_and_test
 #Config
-nb_epochs = 6
+nb_epochs = 2
 batch_size = 128
 learning_rate = 0.001
 #TODO: Figure out what these two quantities below are
 train_dir = 'train_dir'
 filename = 'mnist.ckpt'
+filename_adv_trained = 'mnist_adv.ckpt'
+
+#TODO: Right now the saving is not working as expected. Fix.
+load_model = False
+benign = False
+adversarial = True
 rng = np.random.RandomState([2018, 11, 25])
 label_smoothing = 0.1
 
@@ -58,6 +65,10 @@ if keras.backend.image_dim_ordering() != 'tf':
 #Load the data
 mnist = keras.datasets.mnist
 (train_images, train_labels), (test_images, test_labels) = mnist.load_data()
+train_images = train_images.astype('float32')
+test_images = test_images.astype('float32')
+example = train_images[0]
+print(example.dtype)
 train_images = train_images/255.0
 test_images = test_images/255.0
 
@@ -77,42 +88,92 @@ Create computation graph
 
 x = tf.placeholder(tf.float32, shape= (None, img_rows, img_cols, 1))
 y = tf.placeholder(tf.float32, shape=(None, num_classes))
-model = create_model_one(input_shape = input_shape, num_classes = num_classes)
-preds = model(x)
-print('Defined the model graph')
 
-"""
-Phase 2.1: Train and evaluate on legit test examples
-"""
+if benign:
+    #model = create_model_one(input_shape = input_shape, num_classes = num_classes)
+    model = cnn_model(img_rows = img_rows, img_cols = img_cols, channels = 1, nb_filters = 64, nb_classes = num_classes)
+    preds = model(x)
+    print('Defined the model graph')
 
-#Could do this the normal keras way. And not using the helper functions from cleverhans.
-wrap = KerasModelWrapper(model)
-loss = CrossEntropy(wrap, smoothing=label_smoothing)
-sess = tf.Session()
-keras.backend.set_session(sess)
+    """
+    Phase 2.1: Train and evaluate on legit test examples
+    """
 
-def evaluate():
-    acc = model_eval(sess, x, y, preds, test_images, test_labels, args = eval_params)
-    print('Test accuracy on legit examples: %0.4f' % acc)
+    #Could do this the normal keras way. And not using the helper functions from cleverhans.
+    wrap = KerasModelWrapper(model)
+    loss = CrossEntropy(wrap, smoothing=label_smoothing)
+    sess = tf.Session()
+    keras.backend.set_session(sess)
 
-train(sess, loss, train_images, train_labels, evaluate = evaluate, args = train_params, rng = rng)
-train_acc = model_eval(sess, x, y, preds, train_images, train_labels, args = eval_params)
-print('Train accuracy on legit examples: %0.4f' % train_acc)
+    #Gets passed to train as a function handle
+    def evaluate():
+        acc = model_eval(sess, x, y, preds, test_images, test_labels, args = eval_params)
+        print('Test accuracy of benign model on legit examples: %0.4f' % acc)
 
-"""
-Phase 2.2: Create the attack graph and evaluate on adversarial examples"
-"""
+    saver = tf.train.Saver()
+    path = os.path.join('..', train_dir, filename)
+    if load_model:
+        saver.restore(sess, path)
+        print("Model loaded from: {}". format(path))
+    else:
+        train(sess, loss, train_images, train_labels, evaluate = evaluate, args = train_params, rng = rng)
+        saver.save(sess, path)
+        train_acc = model_eval(sess, x, y, preds, train_images, train_labels, args = eval_params)
+        print('Train accuracy of benign model on legit examples: %0.4f' % train_acc)
 
-fgsm = FastGradientMethod(wrap, sess = sess)
-adv_x = fgsm.generate(x, **fgsm_params)
-adv_x = tf.stop_gradient(adv_x)
-preds_adv = model(adv_x)
-acc = model_eval(sess, x, y, preds_adv, x_test, y_test, args=eval_par)
-print('Test accuracy on adversarial examples: %0.4f\n' %acc)
+    """
+    Phase 2.2: Create the attack graph and evaluate on adversarial examples"
+    """
+
+    fgsm = FastGradientMethod(wrap, sess = sess)
+    adv_x = fgsm.generate(x, **fgsm_params)
+    adv_x = tf.stop_gradient(adv_x)
+    preds_adv = model(adv_x)
+    acc = model_eval(sess, x, y, preds_adv, test_images , test_labels, args=eval_params)
+    print('Test accuracy of benign model on adversarial examples: %0.4f\n' %acc)
 
 """
 Phase 2.3: Perform adversarial training and evaluate on both legit and adversarial
 """
+#Define a new session for adversarial training
+sess = tf.Session()
+keras.backend.set_session(sess)
 
+print("Repeating the process, using adversarial training")
+# Redefine TF model graph
+model_2 = cnn_model(img_rows=img_rows, img_cols=img_cols,
+                  channels=1, nb_filters=64,
+                  nb_classes=num_classes)
+wrap_2 = KerasModelWrapper(model_2)
+preds_2 = model_2(x)
+fgsm2 = FastGradientMethod(wrap_2, sess=sess)
 
+#Gets passed to CrossEntropy loss which leads to adversarial training
+def attack(x):
+    return fgsm2.generate(x, **fgsm_params)
+
+preds_2_adv = model_2(attack(x))
+loss_2 = CrossEntropy(wrap_2, smoothing=label_smoothing, attack=attack)
+
+#Gets passed to train as a function handle
+def evaluate_2():
+    # Accuracy of adversarially trained model on legitimate test inputs
+    accuracy = model_eval(sess, x, y, preds_2, test_images, test_labels,
+                          args=eval_params)
+    print('Test accuracy of adv trained on legitimate examples: %0.4f' % accuracy)
+
+    # Accuracy of the adversarially trained model on adversarial examples
+    accuracy = model_eval(sess, x, y, preds_2_adv, test_images,
+                          test_labels, args=eval_params)
+    print('Test accuracy of adv trained on adversarial examples: %0.4f' % accuracy)
+
+# Perform and evaluate adversarial training
+train(sess, loss_2, train_images, train_labels , evaluate=evaluate_2,
+    args=train_params, rng=rng)
+
+# Calculate training errors
+accuracy = model_eval(sess, x, y, preds_2, train_images, train_labels,
+                      args=eval_params)
+accuracy = model_eval(sess, x, y, preds_2_adv, train_images,
+                      train_labels, args=eval_params)
 

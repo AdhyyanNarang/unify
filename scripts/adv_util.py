@@ -1,6 +1,7 @@
 # TensorFlow and tf.keras
 import tensorflow as tf
-from tensorflow import keras
+import keras
+from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D, Dropout, Flatten, Dense, Activation
 from keras import regularizers
 
@@ -16,32 +17,32 @@ Define util functions
 """
 
 def create_model_one(input_shape, num_classes, logits = False, input_ph = None):
-    model = keras.Sequential()
-    layers = [keras.layers.Conv2D(32, (5,5), input_shape = input_shape),
-            keras.layers.Activation('relu'),
-            keras.layers.Conv2D(32, kernel_size = (3,3)),
-            keras.layers.Activation('relu'),
-            keras.layers.MaxPooling2D(pool_size = (2,2)),
-            keras.layers.Dropout(0.25),
-            keras.layers.Conv2D(64, (3,3)),
-            keras.layers.Activation('relu'),
-            keras.layers.Conv2D(64, (3,3)),
-            keras.layers.Activation('relu'),
-            keras.layers.MaxPooling2D(pool_size = (2,2)),
-            keras.layers.Dropout(0.25),
-            keras.layers.Flatten(),
-            keras.layers.Dense(1024),
-            keras.layers.Activation('relu'),
-            keras.layers.Dense(1024),
-            keras.layers.Activation('relu'),
-            keras.layers.Dense(num_classes)]
+    model = Sequential()
+    layers = [Conv2D(32, (5,5), input_shape = input_shape),
+            Activation('relu'),
+            Conv2D(32, kernel_size = (3,3)),
+            Activation('relu'),
+            MaxPooling2D(pool_size = (2,2)),
+            #Dropout(0.25),
+            Conv2D(64, (3,3)),
+            Activation('relu'),
+            Conv2D(64, (3,3)),
+            Activation('relu'),
+            MaxPooling2D(pool_size = (2,2)),
+            #Dropout(0.25),
+            Flatten(),
+            Dense(1024),
+            Activation('relu'),
+            Dense(1024),
+            Activation('relu'),
+            Dense(num_classes)]
     for layer in layers:
         model.add(layer)
 
     if logits:
         logits_tensor = model(input_ph)
 
-    model.add(keras.layers.Activation('softmax'))
+    model.add(Activation('softmax'))
 
     if logits:
         return model, logits_tensor
