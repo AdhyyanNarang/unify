@@ -49,6 +49,19 @@ def create_model_one(input_shape, num_classes, logits = False, input_ph = None):
     else:
         return model
 
+def create_fully_connected(input_shape, num_classes, logits = False, input_ph = None):
+    model = Sequential()
+    layers = [Dense(units = 32, input_shape= input_shape, activation = 'sigmoid'),
+            Dense(units = 32, activation = 'sigmoid'),
+            Dense(units = num_classes, activation = 'softmax'),
+    ]
+
+    for layer in layers:
+        model.add(layer)
+
+    return model
+
+
 def adv_evaluate(model_input, epsilon_input):
     wrap = KerasModelWrapper(model_input)
     fgsm = FastGradientMethod(wrap)
