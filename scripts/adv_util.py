@@ -49,7 +49,7 @@ def create_model_one(input_shape, num_classes, logits = False, input_ph = None):
     else:
         return model
 
-def create_fully_connected(input_shape, num_classes, logits = False, input_ph = None):
+def create_fully_connected(input_shape, num_classes, reg = 0.0, logits = False, input_ph = None):
     model = Sequential()
     layers = [Dense(units = 32, input_shape= input_shape, activation = 'sigmoid'),
             Dense(units = 32, activation = 'sigmoid'),
