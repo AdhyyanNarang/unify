@@ -12,7 +12,7 @@ from cleverhans.attacks import FastGradientMethod
 def gaussian_blurring(images, std_dev = 2):
 	return np.array([gaussian(im, std_dev, preserve_range = True) for im in images])
 
-def random_perturbation(images, eps = 0.1):
+def random_perturbation(images, eps = 0.5):
 	return images + np.random.uniform(-eps, eps, images.shape)
 
 #p is probability that a pixel gets corrupted, p_b is probability that a corrupted pixel is blacked_out
@@ -39,10 +39,10 @@ def adversarial_examples(images, model, sess):
 
 #corrupt n points
 def corrupt_data(original_data, n, corrupt_func, seed = 0):
-	np.random.seed(seed)
-	data_copy = np.array(original_data)
-	corrupt_indices = np.random.choice(list(range(len(data_copy))), n, replace = False)
-	corrupted_pts = corrupt_func(data_copy[corrupt_indices])
-	data_copy[corrupt_indices] = corrupted_pts
-	return data_copy
+        np.random.seed(seed)
+        data_copy = np.array(original_data)
+        corrupt_indices = np.random.choice(list(range(len(data_copy))), n, replace = False)
+        corrupted_pts = corrupt_func(data_copy[corrupt_indices])
+        data_copy[corrupt_indices] = corrupted_pts
+        return data_copy
 

@@ -51,9 +51,9 @@ def create_model_one(input_shape, num_classes, logits = False, input_ph = None):
 
 def create_fully_connected(input_shape, num_classes, reg = 0.0, logits = False, input_ph = None):
     model = Sequential()
-    layers = [Dense(units = 32, input_shape= input_shape, activation = 'sigmoid'),
-            Dense(units = 32, activation = 'sigmoid'),
-            Dense(units = num_classes, activation = 'softmax'),
+    layers = [Dense(units = 32, input_shape= input_shape, activation = 'sigmoid', kernel_regularizer = regularizers.l2(reg)),
+            Dense(units = 32, activation = 'sigmoid',kernel_regularizer = regularizers.l2(reg)),
+            Dense(units = num_classes, activation = 'softmax', kernel_regularizer = regularizers.l2(reg)),
     ]
 
     for layer in layers:
