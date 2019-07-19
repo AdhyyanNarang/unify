@@ -68,7 +68,6 @@ mnist = keras.datasets.mnist
 train_images = train_images.astype('float32')
 test_images = test_images.astype('float32')
 example = train_images[0]
-print(example.dtype)
 train_images = train_images/255.0
 test_images = test_images/255.0
 

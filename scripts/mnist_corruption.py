@@ -15,6 +15,9 @@ def gaussian_blurring(images, std_dev = 2):
 def random_perturbation(images, eps = 0.5):
 	return images + np.random.uniform(-eps, eps, images.shape)
 
+def gaussian_perturbation(image, eps = 0.5):
+        return image + np.random.normal(loc = 0, scale = eps, size = image.shape)
+
 #p is probability that a pixel gets corrupted, p_b is probability that a corrupted pixel is blacked_out
 def random_blackout_whiteout(images, p = 0.2, p_b = 0.5):
 	#0 corresponds to blackout, 2 corresponds to whiteout, 1 means do nothing

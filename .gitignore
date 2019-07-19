@@ -1,6 +1,12 @@
 .ipynb*
+scripts/.vscode/
+scripts/Notebooks/expt/
+scripts/img/
 *pyc
 *.log
+*.npy
+*.h5
+scripts/weights/
 poison_frogs/dataset_dog-fish_train-900_test-300.npz
 poison_frogs/Data/
 poison_frogs/inceptionModel
